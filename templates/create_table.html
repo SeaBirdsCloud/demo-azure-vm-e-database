@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Criar Tabela - {{ db }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    function generateFields() {
+      const count = document.getElementById('total_columns').value;
+      const container = document.getElementById('columns');
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        container.innerHTML += `
+          <div class="border p-3 mb-3 rounded">
+            <h6>Coluna ${i + 1}</h6>
+            <div class="row g-2">
+              <div class="col-md-3">
+                <input name="name_${i}" placeholder="Nome" class="form-control" required>
+              </div>
+              <div class="col-md-3">
+                <select name="type_${i}" class="form-select">
+                  <option>INT</option>
+                  <option>VARCHAR</option>
+                  <option>TEXT</option>
+                  <option>DATE</option>
+                  <option>DATETIME</option>
+                  <option>FLOAT</option>
+                  <option>BOOLEAN</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <input name="length_${i}" placeholder="Tamanho" class="form-control">
+              </div>
+              <div class="col-md-4 d-flex align-items-center gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="pk_${i}">
+                  <label class="form-check-label">PK</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="ai_${i}">
+                  <label class="form-check-label">Auto Inc</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="notnull_${i}" checked>
+                  <label class="form-check-label">NOT NULL</label>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    function addForeignKeyRow() {
+      const fkContainer = document.getElementById('foreign_keys');
+      const index = fkContainer.children.length;
+      const fkCount = document.getElementById('fk_count');
+      fkCount.value = index + 1;
+
+      let tableOptions = '';
+      {% for t in existing_tables %}
+        tableOptions += '<option value="{{ t }}">{{ t }}</option>';
+      {% endfor %}
+
+      const fkRow = document.createElement('div');
+      fkRow.className = 'border p-3 mb-3 rounded';
+      fkRow.innerHTML = `
+        <h6>Chave Estrangeira ${index + 1}</h6>
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <label>Coluna local</label>
+            <input name="fk_col_${index}" class="form-control" placeholder="nome_coluna">
+          </div>
+          <div class="col-md-4">
+            <label>Tabela de referência</label>
+            <select name="fk_ref_table_${index}" class="form-select" onchange="updateRefCols(this, ${index})">
+              <option value="">Selecione</option>
+              ${tableOptions}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label>Coluna de referência</label>
+            <select name="fk_ref_col_${index}" id="ref_cols_${index}" class="form-select">
+              <option value="">Selecione uma tabela</option>
+            </select>
+          </div>
+        </div>
+      `;
+      fkContainer.appendChild(fkRow);
+    }
+
+    const tablesColumns = {{ tables_columns|tojson }};
+    function updateRefCols(select, index) {
+      const tableName = select.value;
+      const refSelect = document.getElementById(`ref_cols_${index}`);
+      refSelect.innerHTML = '';
+      if (tablesColumns[tableName]) {
+        tablesColumns[tableName].forEach(c => {
+          refSelect.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+      }
+    }
+  </script>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h3>🧱 Criar Nova Tabela no Banco: {{ db }}</h3>
+
+  {% if message %}
+    <div class="alert alert-warning">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST" class="card p-4 shadow-sm">
+    <div class="mb-3">
+      <label>Nome da Tabela</label>
+      <input type="text" name="table_name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label>Número de Colunas</label>
+      <input type="number" id="total_columns" name="total_columns" min="1" max="30" class="form-control w-25" value="3">
+      <button type="button" class="btn btn-outline-secondary mt-2" onclick="generateFields()">Gerar Campos</button>
+    </div>
+
+    <div id="columns"></div>
+
+    <hr class="my-4">
+
+    <h5>🔗 Chaves Estrangeiras</h5>
+    <input type="hidden" id="fk_count" name="fk_count" value="0">
+    <div id="foreign_keys"></div>
+    <button type="button" class="btn btn-outline-primary" onclick="addForeignKeyRow()">➕ Adicionar Chave Estrangeira</button>
+
+    <button class="btn btn-success mt-4">Criar Tabela</button>
+    <a href="{{ url_for('dashboard', db=db) }}" class="btn btn-link">⬅ Voltar</a>
+  </form>
+</div>
+<script>generateFields()</script>
+</body>
+</html>

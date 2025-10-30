@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Executar SQL - {{ db }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h3>🧮 Executar SQL no banco: {{ db }}</h3>
+
+  {% if message %}
+    <div class="alert alert-warning">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST" class="mb-4">
+    <textarea name="sql" rows="5" class="form-control" placeholder="Ex: SELECT * FROM clientes;"></textarea>
+    <button class="btn btn-primary mt-2">Executar</button>
+  </form>
+
+  {% if result %}
+    <table class="table table-bordered">
+      <thead><tr>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for r in result %}
+          <tr>{% for item in r %}<td>{{ item }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  <a href="{{ url_for('dashboard', db=db) }}" class="btn btn-link">⬅ Voltar</a>
+</div>
+</body>
+</html>
